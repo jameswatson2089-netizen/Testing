@@ -1,0 +1,27 @@
+name: Publish Trust Payout Android APK
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'release-assets/TrustPayout-Android-v2.apk.b64'
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Restore and verify signed APK
+        run: |
+          base64 --decode release-assets/TrustPayout-Android-v2.apk.b64 > TrustPayout-Android-v2.apk
+          echo '37525f0c04b8a7d7af36acd3350bcda6f45d6b5539b68fbc918cb36746c1e5d8  TrustPayout-Android-v2.apk' | sha256sum --check -
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v2.0.0 >/dev/null 2>&1; then
+            gh release upload v2.0.0 TrustPayout-Android-v2.apk --clobber
+          else
+            gh release create v2.0.0 TrustPayout-Android-v2.apk --title 'Trust Payout Android 2.0.0' --notes 'Fresh signed Android package. Android 7 or later and Google Chrome required. For full-screen operation, trustpayout.shop must publish its Digital Asset Links association.'
+          fi
